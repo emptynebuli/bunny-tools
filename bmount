@@ -1,0 +1,67 @@
+#!/bin/bash
+
+SDCARD="/dev/mmcblk0p1"
+SDCARD_ANCHOR="/root/sdcard"
+INTERNAL="/dev/nandf"
+INTERNAL_ANCHOR="/root/nand"
+
+if [ ! -d $SDCARD_ANCHOR ]; then
+    mkdir $SDCARD_ANCHOR
+fi
+
+if [ ! -d $INTERNAL_ANCHOR ]; then
+    mkdir $INTERNAL_ANCHOR
+fi
+
+checkmount() {
+    if grep -qs $1 /proc/mounts; then 
+        echo "[*] $1 already mounted - resetting"
+        bmount umount
+    fi
+}
+
+case $1 in
+    "internal")
+        checkmount $INTERNAL_ANCHOR
+        sync
+        mount $INTERNAL $INTERNAL_ANCHOR
+        if [ $? -eq 0 ]; then
+            echo "[+] Mounted to $INTERNAL_ANCHOR"
+            exit 0
+        else
+            echo "[-] Failed to mount storage"
+            exit 1
+        fi
+    ;;
+
+    "external")
+        checkmount $SDCARD_ANCHOR
+        sync
+        mount $SDCARD $SDCARD_ANCHOR
+        if [ $? -eq 0 ]; then
+            echo "[+] Mounted to $SDCARD_ANCHOR"
+            exit 0
+        else
+            echo "[-] Failed to mount storage"
+            exit 1
+        fi
+    ;;
+
+    "umount")
+        if grep -qs $INTERNAL_ANCHOR /proc/mounts; then
+            echo "[*] Unmounting $INTERNAL_ANCHOR"
+            umount $INTERNAL_ANCHOR
+            sync
+        fi
+
+        if grep -qs $SDCARD_ANCHOR /proc/mounts; then
+            echo "[*] Unmounting $SDCARD_ANCHOR"
+            umount $SDCARD_ANCHOR
+            sync
+        fi
+    ;;
+
+    *)
+        echo "Usage:                    bmount [ internal | external | umount ]"
+    ;;
+esac

@@ -1,0 +1,24 @@
+#!/bin/bash
+
+SDCARD="/dev/mmcblk0"
+PART1="/dev/mmcblk0p1"
+
+case $1 in
+    "default")
+        echo "[*] Writing partition table"
+        echo ',,c;' | sfdisk $SDCARD
+
+        if [ $2 ]; then
+            echo "[*] Formatting partition with label: $2"
+            mkfs.vfat -F32 -n $2 $PART1
+        else
+            echo "[*] Formatting with default label"
+            mkfs.vfat -F32 $PART1
+        fi
+
+    ;;
+
+    *)
+        echo "Usage:                    bdisk [ default <label> ]"
+    ;;
+esac

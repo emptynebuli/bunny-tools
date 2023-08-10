@@ -1,0 +1,73 @@
+#!/bin/bash
+
+SDCARD_ANCHOR="/root/sdcard"
+INTERNAL_ANCHOR="/root/nand"
+TOOLS_PATH="/tools"
+
+case $1 in
+    "external")
+        echo "[*] Mounting anchors"
+        bmount external
+        bmount internal
+
+        echo "[*] Syncing external -> internal"
+        cp -Rf $SDCARD_ANCHOR/* $INTERNAL_ANCHOR
+
+        bmount umount
+    ;;
+
+    "internal")
+        echo "[*] Mounting anchors"
+        bmount external
+        bmount internal
+
+        echo "[*] Syncing internal -> external"
+        cp -Rf $INTERNAL_ANCHOR/* $SDCARD_ANCHOR
+
+        bmount umount
+    ;;
+
+    "tools")
+        case $2 in
+            "external")
+                echo "[*] Mounting $2 anchor"
+                bmount external
+
+                if [[ ! -z "$3" ]]; then
+                    echo "[+] Setting default path: $SDCARD_ANCHOR/tools"
+                    3="/tools"
+                fi
+                echo "[*] Syncing tooling from $SDCARD_ANCHOR/$3"
+                cp $SDCARD_ANCHOR/tools/* $TOOLS_PATH
+                chmod +x $TOOLS_PATH/*
+
+                bmount umount
+            ;;
+
+            "internal")
+                echo "[*] Mounting $2 anchor"
+                bmount internal
+
+                if [[ ! -z "$3" ]]; then
+                    echo "[+] Setting default path: $INTERNAL_ANCHOR/tools"
+                    3="/tools"
+                fi
+                echo "[*] Syncing tooling from $INTERNAL_ANCHOR/$3"
+                cp $INTERNAL_ANCHOR/tools/* $TOOLS_PATH
+
+                bmount umount
+            ;;
+
+            *)
+                echo "Usage:                    bsync [ external | internal | tools <external <path>| internal <path>> ]"
+                echo "[ERROR] Anchor not provided"
+                exit 1
+            ;;
+
+        esac
+    ;;
+
+    *)
+        echo "Usage:                    bsync [ external | internal | tools <external | internal> ]"
+    ;;
+esac
